@@ -82,9 +82,6 @@
             text-align: center;
             border: 1px solid #334155;
             transition: all 0.5s ease;
-        }
-
-        .api-connected {
             border-left: 4px solid #10b981;
             background: rgba(16, 185, 129, 0.1);
         }
@@ -434,7 +431,7 @@
                 <h2>🔍 Live Stock Analysis</h2>
                 <div class="search-container">
                     <input type="text" id="stockSearch" class="search-input" placeholder="Enter any stock symbol (e.g., AAPL, TSLA, NVDA)">
-                    <button onclick="searchLiveStock()" id="searchBtn" class="search-btn">Analyze</button>
+                    <button id="searchBtn" class="search-btn">Analyze</button>
                 </div>
                 <div id="searchResults"></div>
             </div>
@@ -455,7 +452,7 @@
                 class="ai-search-input" 
                 placeholder="Ask AI: What's happening with Apple today? Should I buy Tesla now? Latest market trends?"
             >
-            <button onclick="askLiveAI()" id="askAIBtn" class="ai-search-btn">Ask AI</button>
+            <button id="askAIBtn" class="ai-search-btn">Ask AI</button>
         </div>
     </div>
 
@@ -463,14 +460,13 @@
         let watchlist = [];
         let currentModal = null;
         
-        // API Configuration - automatically detects if running on Vercel or localhost
-        const API_BASE = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000/api' 
-            : '/api';
+        // API Configuration
+        const API_BASE = '/api';
 
         document.addEventListener('DOMContentLoaded', function() {
             loadWatchlist();
             
+            // Add event listeners
             document.getElementById('aiSearchInput').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') askLiveAI();
             });
@@ -478,6 +474,9 @@
             document.getElementById('stockSearch').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') searchLiveStock();
             });
+
+            document.getElementById('searchBtn').addEventListener('click', searchLiveStock);
+            document.getElementById('askAIBtn').addEventListener('click', askLiveAI);
 
             // Refresh watchlist every 30 seconds
             setInterval(refreshWatchlist, 30000);
@@ -498,7 +497,6 @@
             resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Fetching live market data from Polygon.io...</div>';
 
             try {
-                // Fetch real stock data from our API
                 const stockResponse = await fetch(`${API_BASE}/stock/${symbol}`);
                 const stockData = await stockResponse.json();
 
@@ -528,16 +526,16 @@
                 <div class="stock-item">
                     <div class="stock-header">
                         <span class="stock-symbol">${stock.symbol}</span>
-                        <span class="stock-price">${stock.price.toFixed(2)}</span>
+                        <span class="stock-price">$${stock.price.toFixed(2)}</span>
                     </div>
                     <p style="margin-bottom: 10px; color: #94a3b8; font-weight: 500;">${stock.name}</p>
                     <div class="stock-details">
-                        <div>Change: <span class="${changeClass}">${changeSymbol}${stock.change.toFixed(2)}</span></div>
+                        <div>Change: <span class="${changeClass}">${changeSymbol}$${stock.change.toFixed(2)}</span></div>
                         <div>Change %: <span class="${changeClass}">${changeSymbol}${stock.changePercent.toFixed(2)}%</span></div>
                         <div>Volume: ${formatNumber(stock.volume)}</div>
                         <div>Market Cap: ${stock.marketCap || 'N/A'}</div>
-                        <div>High: ${stock.high.toFixed(2)}</div>
-                        <div>Low: ${stock.low.toFixed(2)}</div>
+                        <div>High: $${stock.high.toFixed(2)}</div>
+                        <div>Low: $${stock.low.toFixed(2)}</div>
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
@@ -579,12 +577,10 @@
             btn.textContent = 'Analyzing with OpenAI...';
             
             try {
-                // Extract stock symbol if mentioned
                 const stockSymbol = extractStockSymbol(query);
                 let stockData = null;
                 let newsData = null;
 
-                // Fetch stock data if symbol is mentioned
                 if (stockSymbol) {
                     try {
                         const stockResponse = await fetch(`${API_BASE}/stock/${stockSymbol}`);
@@ -597,7 +593,6 @@
                     }
                 }
 
-                // Get AI analysis
                 const aiResponse = await fetch(`${API_BASE}/ai-analysis`, {
                     method: 'POST',
                     headers: {
@@ -645,7 +640,6 @@
                         <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 10px;">🟢 Analysis generated: ${new Date().toLocaleTimeString()}</div>
                     </div>
                     
-                    <!-- AI Direct Answer Section -->
                     <div style="background: linear-gradient(45deg, ${structured.color}20, ${structured.color}10); border: 2px solid ${structured.color}; border-radius: 15px; padding: 25px; margin-bottom: 30px; position: relative;">
                         <div style="position: absolute; top: 15px; right: 15px; font-size: 2rem; opacity: 0.3;">${structured.icon}</div>
                         <h3 style="color: ${structured.color}; margin: 0 0 15px 0; font-size: 1.3rem;">🎯 AI Recommendation</h3>
@@ -659,54 +653,12 @@
                         </div>
                     </div>
                     
-                    <!-- Full AI Analysis -->
                     <div style="background: rgba(15, 23, 42, 0.8); border-radius: 12px; padding: 25px; margin-bottom: 25px; border-left: 4px solid #8b5cf6;">
                         <h3 style="color: #8b5cf6; margin: 0 0 15px 0;">📊 Detailed Analysis</h3>
                         <div style="font-size: 0.95rem; color: #e2e8f0; line-height: 1.6; white-space: pre-wrap;">
                             ${aiData.analysis}
                         </div>
                     </div>
-                    
-                    ${stockData ? `
-                    <!-- Stock Data Section -->
-                    <div style="background: rgba(15, 23, 42, 0.8); border-radius: 12px; padding: 25px; margin-bottom: 25px; border-left: 4px solid #10b981;">
-                        <h3 style="color: #10b981; margin: 0 0 15px 0;">📈 Current Stock Data</h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-                            <div style="text-align: center;">
-                                <div style="font-size: 1.5rem; font-weight: bold; color: #64ffda;">${stockData.price.toFixed(2)}</div>
-                                <div style="font-size: 0.9rem; color: #94a3b8;">${stockData.symbol}</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 1.2rem; font-weight: bold; color: ${stockData.change >= 0 ? '#10b981' : '#ef4444'};">
-                                    ${stockData.change >= 0 ? '+' : ''}${stockData.change.toFixed(2)}
-                                </div>
-                                <div style="font-size: 0.9rem; color: #94a3b8;">Change ($)</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 1.2rem; font-weight: bold; color: ${stockData.changePercent >= 0 ? '#10b981' : '#ef4444'};">
-                                    ${stockData.changePercent >= 0 ? '+' : ''}${stockData.changePercent.toFixed(2)}%
-                                </div>
-                                <div style="font-size: 0.9rem; color: #94a3b8;">Change %</div>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    ${newsData && newsData.articles ? `
-                    <!-- News Section -->
-                    <div style="background: rgba(15, 23, 42, 0.8); border-radius: 12px; padding: 25px; margin-bottom: 25px; border-left: 4px solid #f59e0b;">
-                        <h3 style="color: #f59e0b; margin: 0 0 15px 0;">📰 Latest News</h3>
-                        ${newsData.articles.slice(0, 3).map(article => `
-                            <div style="background: rgba(71, 85, 105, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                                <div style="font-size: 0.9rem; color: #e2e8f0; margin-bottom: 5px; font-weight: 500;">${article.title}</div>
-                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #94a3b8;">
-                                    <span>${article.source} • ${article.time}</span>
-                                    <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; background: rgba(${article.sentiment === 'positive' ? '16, 185, 129' : article.sentiment === 'negative' ? '239, 68, 68' : '100, 255, 218'}, 0.2); color: ${article.sentiment === 'positive' ? '#10b981' : article.sentiment === 'negative' ? '#ef4444' : '#64ffda'};">${article.sentiment.toUpperCase()}</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    ` : ''}
                     
                     <div style="text-align: center; margin-top: 30px;">
                         ${stockData ? `<button onclick="addToWatchlist('${stockData.symbol}', ${stockData.price}); closeModal();" style="background: linear-gradient(45deg, #10b981, #059669); border: none; color: white; padding: 15px 40px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 16px; margin-right: 10px;">+ Add to Watchlist</button>` : ''}
@@ -796,7 +748,6 @@
             
             for (const item of watchlist) {
                 try {
-                    // Fetch current stock data
                     const response = await fetch(`${API_BASE}/stock/${item.symbol}`);
                     const stock = await response.json();
                     
@@ -820,4 +771,148 @@
                                     <div>Change %: <span class="${changeClass}">${changeSymbol}${stock.changePercent.toFixed(2)}%</span></div>
                                     <div>Since Added: <span class="${gainLossClass}">${gainLoss > 0 ? '+' : ''}${gainLoss.toFixed(2)}</span></div>
                                     <div>Gain/Loss %: <span class="${gainLossClass}">${gainLoss > 0 ? '+' : ''}${gainLossPercent}%</span></div>
-                                    <div>
+                                    <div>Volume: ${formatNumber(stock.volume)}</div>
+                                    <div>Added: ${item.dateAdded}</div>
+                                </div>
+                                
+                                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                    <button onclick="getLiveAnalysis('${item.symbol}')" class="btn btn-primary">AI Analysis</button>
+                                    <button onclick="removeFromWatchlist('${item.symbol}')" class="btn btn-secondary">Remove</button>
+                                </div>
+                                
+                                <div class="data-source-indicator ${dataSourceClass}">
+                                    ${stock.source === 'polygon.io' ? '🔴 Live data from Polygon.io' : '🟡 Simulated data'} • ${new Date(stock.lastUpdated).toLocaleTimeString()}
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching data for ${item.symbol}:`, error);
+                }
+            }
+
+            watchlistDiv.innerHTML = html || '<p style="text-align: center; color: #94a3b8; font-style: italic;">Error loading watchlist data. Please try refreshing.</p>';
+        }
+
+        function removeFromWatchlist(symbol) {
+            watchlist = watchlist.filter(item => item.symbol !== symbol);
+            updateWatchlist();
+            showNotification(`${symbol} removed from watchlist!`, 'success');
+        }
+
+        function loadWatchlist() {
+            watchlist = [
+                { symbol: 'AAPL', dateAdded: new Date().toLocaleDateString(), addedPrice: 170.00 }
+            ];
+            updateWatchlist();
+        }
+
+        function refreshWatchlist() {
+            if (watchlist.length > 0) {
+                updateWatchlist();
+            }
+        }
+
+        function getLiveAnalysis(symbol) {
+            document.getElementById('aiSearchInput').value = `What do you think about ${symbol} stock right now?`;
+            askLiveAI();
+        }
+
+        function showModal(content) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                padding: 20px;
+            `;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.style.cssText = `
+                background: rgba(30, 41, 59, 0.98);
+                border-radius: 20px;
+                border: 1px solid rgba(100, 255, 218, 0.3);
+                max-width: 900px;
+                max-height: 90vh;
+                overflow-y: auto;
+                position: relative;
+                width: 100%;
+            `;
+            
+            contentDiv.innerHTML = content;
+            modal.appendChild(contentDiv);
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+            
+            currentModal = modal;
+        }
+
+        function closeModal() {
+            if (currentModal) {
+                document.body.removeChild(currentModal);
+                currentModal = null;
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                max-width: 300px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            `;
+            
+            switch(type) {
+                case 'success':
+                    notification.style.background = 'linear-gradient(45deg, #10b981, #059669)';
+                    break;
+                case 'error':
+                    notification.style.background = 'linear-gradient(45deg, #ef4444, #dc2626)';
+                    break;
+                case 'warning':
+                    notification.style.background = 'linear-gradient(45deg, #f59e0b, #d97706)';
+                    break;
+                default:
+                    notification.style.background = 'linear-gradient(45deg, #64ffda, #00bcd4)';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
